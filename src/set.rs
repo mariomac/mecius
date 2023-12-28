@@ -1,6 +1,3 @@
-use std::marker::PhantomData;
-
-
 #[derive(Debug)]
 pub struct Sparse<T> {
     dense: Vec<Entry<T>>,
@@ -13,7 +10,7 @@ struct Entry<T> {
     value: T,
 }
 
-impl<T> Sparse<T> where Entry<T>: From<T> {
+impl<T> Sparse<T> where Entry<T>: From<T>, T: Clone {
     pub fn new() -> Self {
         Self {
             dense: Vec::new(),
@@ -79,7 +76,12 @@ impl<T> Sparse<T> where Entry<T>: From<T> {
             false
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item=T> + '_ {
+        self.dense.iter().map(|item| item.value.clone())
+    }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -109,11 +111,8 @@ mod tests {
     }
 
     #[test]
-    fn remove() {
-        let mut set = Sparse::new();
-        set.insert(1);
-        set.insert(3);
-        set.insert(133);
+    fn from_remove() {
+        let mut set = Sparse::from(vec![1, 3, 133]);
 
         assert!(set.remove(3));
         assert!(!set.remove(4));
@@ -127,11 +126,12 @@ mod tests {
     }
 
     #[test]
-    fn contains() {}
-
-    #[test]
-    fn iter() {}
-
-    #[test]
-    fn from() {}
+    fn iter() {
+        let set = Sparse::from(vec![1, 3, 133]);
+        let mut iter = set.iter();
+        assert_eq!(1, iter.next().unwrap());
+        assert_eq!(3, iter.next().unwrap());
+        assert_eq!(133, iter.next().unwrap());
+        assert_eq!(None, iter.next());
+    }
 }
